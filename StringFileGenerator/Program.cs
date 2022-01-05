@@ -11,7 +11,7 @@ namespace StringFileGenerator
         static async Task<int> Main(string[] args)
         {
             string outputFilename = "output.txt";
-            long targetSize = 1024 * 1024 * 1000;
+            long targetSize = (long)1024 * 1024 * 5000;
 
             Stopwatch stopWatch = new Stopwatch();
 

@@ -23,7 +23,7 @@ namespace StringFileGenerator
 
         public async Task Generate()
         {
-            var agregateBlock = new BatchBlock<byte[]>(300);
+            var agregateBlock = new BatchBlock<byte[]>(1000*2);
 
             var writeBlock = new ActionBlock<IEnumerable<byte[]>>(async (IEnumerable<byte[]> inputData) => {
                 long bufferSize = 0;
@@ -46,14 +46,22 @@ namespace StringFileGenerator
             agregateBlock.LinkTo(writeBlock, new DataflowLinkOptions() { PropagateCompletion = true });
 
             List<Task> generatorTasks = new List<Task>();
-            for (int i = 0; i < Environment.ProcessorCount/2; i++)
+            for (int i = 0; i < Environment.ProcessorCount; i++)
             {
                 generatorTasks.Add(Task.Run(async ()=> {
+                    Random rnd = new Random();
                     while (true)
                     {
-                        Random rnd = new Random();
-                        string str = $"{rnd.Next(1, 99999)}. {GetRandomString(rnd.Next(1, 5))}{Environment.NewLine}";
-                        byte[] buffer = Encoding.UTF8.GetBytes(str);
+                        StringBuilder result = new StringBuilder();
+                        for (int i = 0; i < 1000; i++)
+                        {
+                            result.Append(rnd.Next(1, 99999));
+                            result.Append(". ");
+                            GetRandomString(rnd.Next(1, 5), rnd, result);
+                            result.Append(Environment.NewLine);
+                        }
+
+                        byte[] buffer = Encoding.UTF8.GetBytes(result.ToString());
                         if (TryIncrementSize(buffer.Length))
                         {
                             await agregateBlock.SendAsync(buffer);
@@ -77,10 +85,7 @@ namespace StringFileGenerator
         {
             using Stream stream = File.Open(filename, FileMode.Append);
             {
-                //foreach (var dataToWrite in outputData)
-                //{
-                    await stream.WriteAsync(outputData);
-                //}
+                await stream.WriteAsync(outputData);
             }
         }
 
@@ -98,17 +103,15 @@ namespace StringFileGenerator
             return result;
         }
 
-        private string GetRandomString(int count)
+        private void GetRandomString(int count, Random rnd, StringBuilder result)
         {
-            StringBuilder result = new StringBuilder();
             string[] words = new string[count];
-            Random rnd = new Random();
 
             for (int i = 0; i < count; i++)
             {
                 words[i] = wordList[rnd.Next(wordList.Length - 1)];
             }
-            return result.AppendJoin(' ', words).ToString();
+            result.AppendJoin(' ', words);
         }
 
         private string[] wordList = new string[] {

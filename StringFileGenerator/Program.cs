@@ -39,6 +39,7 @@ namespace StringFileGenerator
             };
             try
             {
+                // Preparing variables
                 memUsageTask = CountMaxMem(cts.Token);
                 if (args.Length < 1
                     || Array.Exists(new string[4] { "/?", "/h", "-help", "--help" }, input => args[0] == input))
@@ -99,9 +100,10 @@ namespace StringFileGenerator
 
                 GracefulCancel = true;
 
+                // Main execution
                 stringFileGenerator = new StringFileGenerator(outputFilename, (long)1024 * 1024 * targetSize, repetitionThreshold);
                 Console.WriteLine($"Generating file \"{outputFilename}\" with size {targetSize:n0}MB and repetition threshold {repetitionThreshold}%");
-                await stringFileGenerator.Generate();
+                await stringFileGenerator.GenerateAsync();
 
                 exitCode = 0;
             }

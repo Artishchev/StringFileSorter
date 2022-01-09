@@ -10,12 +10,37 @@ namespace StringFileGenerator
 {
     internal class StringFileGenerator
     {
+        /// <summary>
+        /// Output file name
+        /// </summary>
         private string filename;
+
+        /// <summary>
+        /// Desired size of the output file
+        /// </summary>
         private long targetSize;
+
+        /// <summary>
+        /// Repeated string percentage
+        /// </summary>
         private int repetitionThreshold;
+
+        /// <summary>
+        /// Current size of a generated data
+        /// </summary>
         private long currentSize = 0;
+
+        /// <summary>
+        /// Thread synchronization object for output size managment
+        /// </summary>
         private object lockObject = new object();
 
+        /// <summary>
+        /// Generates file wit random strings
+        /// </summary>
+        /// <param name="filename">Output file name</param>
+        /// <param name="targetSize">Output file size</param>
+        /// <param name="repetitionThreshold">Repeated string percentage</param>
         public StringFileGenerator(string filename, long targetSize, int repetitionThreshold)
         {
             this.filename = filename;
@@ -23,7 +48,11 @@ namespace StringFileGenerator
             this.repetitionThreshold = repetitionThreshold;
         }
 
-        public async Task Generate()
+        /// <summary>
+        /// Generates output file
+        /// </summary>
+        /// <returns>AsyncTask</returns>
+        public async Task GenerateAsync()
         {
             var agregateBlock = new BatchBlock<byte[]>(1000*2);
 
@@ -42,7 +71,7 @@ namespace StringFileGenerator
                     index += item.Length;
                 }
 
-                await WriteToFile(buffer);
+                await WriteToFileAsync(buffer);
             });
 
             agregateBlock.LinkTo(writeBlock, new DataflowLinkOptions() { PropagateCompletion = true });
@@ -109,7 +138,12 @@ namespace StringFileGenerator
             await writeBlock.Completion;
         }
 
-        private async Task WriteToFile(byte[] outputData)
+        /// <summary>
+        /// Writes buffered data to the output file
+        /// </summary>
+        /// <param name="outputData">Buffered data</param>
+        /// <returns>Async task</returns>
+        private async Task WriteToFileAsync(byte[] outputData)
         {
             using Stream stream = File.Open(filename, FileMode.Append);
             {
@@ -117,6 +151,11 @@ namespace StringFileGenerator
             }
         }
 
+        /// <summary>
+        /// Increments current output data size
+        /// </summary>
+        /// <param name="size">Size to be added</param>
+        /// <returns>True if amount is acceptable. False if it more than desired</returns>
         private bool TryIncrementSize(int size)
         {
             bool result = false;
@@ -130,7 +169,13 @@ namespace StringFileGenerator
             }
             return result;
         }
-
+        
+        /// <summary>
+        /// Generates random string from the dictionary
+        /// </summary>
+        /// <param name="count">Words in new string</param>
+        /// <param name="rnd">Random generator</param>
+        /// <param name="result">Resulting string where new words will be added</param>
         private void GetRandomString(int count, Random rnd, StringBuilder result)
         {
             string[] words = new string[count];
